@@ -33,16 +33,24 @@ const useMetaMask = () => {
     }
   };
 
-  const disconnectWallet = async() => {
-    await window.ethereum.request({
-      method: 'wallet_revokePermissions',
-      params: [
-        {
-          eth_accounts: {},
-        },
-      ],
-    });
+  const disconnectWallet = async () => {
+    try {
+      if (window.ethereum) {
+        await window.ethereum.request({
+          method: "wallet_revokePermissions",
+          params: [
+            {
+              eth_accounts: {},
+            },
+          ],
+        });
+      }
+      setAccount(null);
+    } catch (error) {
+      console.error("Error disconnecting wallet:", error);
+    }
   };
+  
 
   return { account, connectWallet, disconnectWallet, provider };
 };
