@@ -1,7 +1,36 @@
 import ScrollingLogos from "../components/ScrollingLogos";
 import Footer from '../components/Footer';
+import RegisterModal from "../components/RegisterModal";
+import useMetaMask from "../hooks/UseMetamask";
+import { useEffect, useState } from "react";
+import { checkUserExists, saveUser } from "../hooks/useRealtimeDatabase";
 
 const Home = () => {
+    const [showModal, setShowModal] = useState(false);
+    const [userExists, setUserExists] = useState<boolean | null>(null);
+    const { account } = useMetaMask();
+
+    useEffect(() => {
+      if (account) {
+        console.log("Checking user existence for:", account);
+        checkUserExists(account).then((exists) => {
+          console.log("User exists:", exists);
+          setUserExists(exists);
+          if (!exists) setShowModal(true);
+        });
+      } else {
+        setUserExists(null);
+        setShowModal(false);
+      }
+    }, [account]);
+  
+    const handleSaveUser = async (username: string) => {
+      if (username.trim() !== "") {
+        await saveUser(account as string, username);
+        setShowModal(false);
+        setUserExists(true);
+      }
+    };
   return (
     <>
       <div className="max-w-7xl mx-auto px-4 py-12 mt-24">
@@ -33,7 +62,7 @@ const Home = () => {
           <ScrollingLogos />
         </div>
       </div>
-
+      <RegisterModal isOpen={showModal}  onSubmit={handleSaveUser} />
       {/* Footer now outside the wrapper */}
       <Footer />
     </>
