@@ -1,10 +1,60 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Loader2 } from 'lucide-react';
+import TransactionHistory from '../components/TransactionHistory';
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
 }
+
+interface MoneyTransfer {
+  amount: number;
+  to: string;
+  platform: string;
+  currency: string;
+}
+
+interface Swap {
+  amount: number;
+  fromCurrency: string;
+  toPlatform: string;
+}
+
+const parseCommand = (input: string): MoneyTransfer | Swap | null => {
+  const transferRegex = /send\s+(\d+)\s*(usd|usd|dollars)\s+to\s+([a-zA-Z]+)\s+on\s+([a-zA-Z]+)/i;
+  const transferMatch = input.match(transferRegex);
+
+  if (transferMatch) {
+    const amount = parseFloat(transferMatch[1]);
+    const currency = transferMatch[2].toUpperCase();
+    const to = transferMatch[3];
+    const platform = transferMatch[4];
+
+    return {
+      amount,
+      to,
+      platform,
+      currency
+    };
+  }
+
+  const swapRegex = /swap\s+(\d+)\s*(usd|usd|dollars)\s+to\s+([a-zA-Z]+)/i;
+  const swapMatch = input.match(swapRegex);
+
+  if (swapMatch) {
+    const amount = parseFloat(swapMatch[1]);
+    const fromCurrency = swapMatch[2].toUpperCase();
+    const toPlatform = swapMatch[3];
+
+    return {
+      amount,
+      fromCurrency,
+      toPlatform
+    };
+  }
+
+  return null;
+};
 
 const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -13,57 +63,78 @@ const Chat = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
+  // Prevent auto-scrolling when submitting query
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
-  
+
     const userMessage = { role: 'user' as const, content: input.trim() };
-    setMessages(prev => [...prev, userMessage]);
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
     setInput('');
     setIsLoading(true);
-  
+
+    // Check for money transfer or swap command
+    const command = parseCommand(input);
+
+    if (command) {
+      if ((command as MoneyTransfer).to) {
+        const moneyTransfer = command as MoneyTransfer;
+        console.log('Detected money transfer:', moneyTransfer);
+        setMessages((prev) => [
+          ...prev,
+          { role: 'assistant', content: `I found a request to send ${moneyTransfer.amount} ${moneyTransfer.currency} to ${moneyTransfer.to} on ${moneyTransfer.platform}.` },
+        ]);
+      } else {
+        const swapCommand = command as Swap;
+        console.log('Detected swap command:', swapCommand);
+        setMessages((prev) => [
+          ...prev,
+          { role: 'assistant', content: `I found a request to swap ${swapCommand.amount} ${swapCommand.fromCurrency} to ${swapCommand.toPlatform}.` },
+        ]);
+      }
+      setIsLoading(false);
+      return; // Don't send a request to the API if it's a command (either transfer or swap)
+    }
+
     try {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
-          messages: [...messages, userMessage],
-        }),
-      });
-  
-      // Log the response for debugging
-      console.log('API Response:', response);
-  
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                role: 'user',
+                parts: [{ text: input.trim() }]
+              }
+            ]
+          }),
+        }
+      );
+
       if (!response.ok) {
         throw new Error(`API request failed with status ${response.status}`);
       }
-  
+
       const data = await response.json();
-      console.log('API Data:', data); // Log the data for debugging
-  
-      if (data.choices && data.choices[0]) {
-        const assistantMessage = { role: 'assistant' as const, content: data.choices[0].message.content };
+      if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
+        const assistantMessage = { role: 'assistant' as const, content: data.candidates[0].content.parts[0].text };
         setMessages(prev => [...prev, assistantMessage]);
       }
     } catch (error) {
       console.error('Error:', error);
       setMessages(prev => [
         ...prev,
-        {
-          role: 'assistant',
-          content: 'Sorry, I encountered an error. Please try again.',
-        },
+        { role: 'assistant', content: 'Sorry, I encountered an error. Please try again later.' },
       ]);
     } finally {
       setIsLoading(false);
@@ -71,24 +142,14 @@ const Chat = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 mt-24">
-      <div className="bg-white rounded-lg shadow-lg flex flex-col h-[80vh]">
-        {/* Messages Container */}
+    <div className="max-w-7xl mx-auto px-4 py-8 mt-32">
+      <h1 className="text-2xl font-bold text-gray-900 mb-4">Chat</h1>
+
+      <div className="bg-white rounded-lg shadow-lg flex flex-col h-[70vh]">
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.map((message, index) => (
-            <div
-              key={index}
-              className={`flex ${
-                message.role === 'user' ? 'justify-end' : 'justify-start'
-              }`}
-            >
-              <div
-                className={`max-w-[80%] rounded-lg p-4 ${
-                  message.role === 'user'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-900'
-                }`}
-              >
+            <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-[80%] rounded-lg p-4 ${message.role === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'}`}>
                 <p className="whitespace-pre-wrap">{message.content}</p>
               </div>
             </div>
@@ -103,7 +164,6 @@ const Chat = () => {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Form (fixed at the bottom) */}
         <form onSubmit={handleSubmit} className="border-t border-gray-200 p-4 bg-white">
           <div className="flex space-x-4">
             <input
@@ -123,6 +183,10 @@ const Chat = () => {
             </button>
           </div>
         </form>
+      </div>
+
+      <div className="min-h-screen bg-gray-100 p-4">
+        <TransactionHistory />
       </div>
     </div>
   );
