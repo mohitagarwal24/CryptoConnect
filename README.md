@@ -63,7 +63,7 @@ CryptoConnect is a decentralized social and financial platform that allows users
 
 1️⃣ Clone the repository:
 ```bash
- git clone https://github.com/your-repo/cryptoconnect.git
+ git clone https://github.com/mohitagarwal24/cryptoconnect.git
 ```
 
 2️⃣ Install dependencies:
