@@ -1,6 +1,25 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Loader2 } from 'lucide-react';
 import TransactionHistory from '../components/TransactionHistory';
+import { checkUserExists, getUser, getWalletbyUsername } from '../hooks/useRealtimeDatabase';
+import useMetaMask from '../hooks/UseMetamask';
+import { BigNumberish, ethers } from 'ethers';
+import ABI from "../build/Bridge.json";
+
+const chainData: { [key: number]: { router: string; link: string; destinationChainSelector: string; ccip: string } } = {
+  11155111 : { // Ethereum Sepolia
+      router: '0x0BF3dE8c5D3e8A2B34D2BEeB17ABfCeBaf363A59',
+      link: '0x779877A7B0D9E8603169DdbD7836e478b4624789',
+      destinationChainSelector: "16015286601757825753",
+      ccip: "0xFd57b4ddBf88a4e07fF4e34C487b99af2Fe82a05"
+  },
+  80002: { // Polygon Amoy
+      router: '0x9C32fCB86BF0f4a1A8921a9Fe46de3198bb884B2',
+      link: '0x0Fd9e8d3aF1aaee056EB9e802c3A762a667b1904',
+      destinationChainSelector: "16281711391670634445",
+      ccip: "0xcab0EF91Bee323d1A617c0a027eE753aFd6997E4"
+  },
+};
 
 interface Message {
   role: 'user' | 'assistant';
@@ -20,8 +39,9 @@ interface Swap {
   toPlatform: string;
 }
 
+
 const parseCommand = (input: string): MoneyTransfer | Swap | null => {
-  const transferRegex = /send\s+(\d+)\s*(usd|usd|dollars)\s+to\s+([a-zA-Z]+)\s+on\s+([a-zA-Z]+)/i;
+  const transferRegex = /send\s+(\d+(?:\.\d+)?)\s*(usd|dollars)\s+to\s+([a-zA-Z]+)\s+on\s+([a-zA-Z]+)/i;
   const transferMatch = input.match(transferRegex);
 
   if (transferMatch) {
@@ -58,13 +78,87 @@ const parseCommand = (input: string): MoneyTransfer | Swap | null => {
 
 const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [txHash, setTxHash] = useState("");
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [user, setUser] = useState<any>(null);
+  const [account, setAccount] = useState<string | null>(null); 
 
-  const scrollToBottom = () => {
+  // Check MetaMask account
+  useEffect(() => {
+    const checkMetaMaskAccount = async () => {
+      if (window.ethereum) {
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+          if (accounts.length > 0) {
+            setAccount(accounts[0]);
+          }
+        } catch (error) {
+          console.error("Error fetching account address:", error);
+        }
+      }
+    };
+
+    checkMetaMaskAccount();
+  }, []);
+
+
+  console.log("account:", account); 
+
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      if (account) {
+        console.log("Checking user existence for:", account);
+        const exists = await checkUserExists(account);
+        if (exists) {
+          const _user = await getUser(account);
+          setUser(_user);
+        } else {
+          setUser(null);
+        }
+      }
+    };
+
+    fetchUser();
+  }, [account]);
+
+const scrollToBottom = () => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+
+  const transferTokens = async ( 
+    destinationChainSelector: string,
+    receiver: string,
+    token: string,
+    amount: string) => {
+    if (!window.ethereum) {
+      alert("MetaMask is required!");
+      return;
+    }
+
+    console.log("private key before Transfer:", user?.agentPrivateKey);
+
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const agentWallet = new ethers.Wallet(user?.agentPrivateKey, provider);
+    const contract = new ethers.Contract(user?.contractAddress, ABI, agentWallet);
+
+    try {
+      const tx = await contract.transferTokensPayLINK(
+        destinationChainSelector,
+        receiver,
+        token,
+        amount
+      );
+
+      setTxHash(tx.hash);
+      console.log("Transaction sent:", tx.hash);
+    } catch (error) {
+      console.error("Transaction failed:", error);
     }
   };
 
@@ -90,6 +184,17 @@ const Chat = () => {
           ...prev,
           { role: 'assistant', content: `I found a request to send ${moneyTransfer.amount} ${moneyTransfer.currency} to ${moneyTransfer.to} on ${moneyTransfer.platform}.` },
         ]);
+
+        if (moneyTransfer.platform === "polygon"){
+          const chainId = 80002;
+          const receiver = await getWalletbyUsername(moneyTransfer.to);
+          if (receiver) {
+            transferTokens(chainData[chainId].destinationChainSelector, receiver, chainData[chainId].ccip, ethers.parseEther(moneyTransfer.amount.toString()).toString());
+          } else {
+            console.error("Receiver wallet address not found");
+          }
+        }
+
       } else {
         const swapCommand = command as Swap;
         console.log('Detected swap command:', swapCommand);

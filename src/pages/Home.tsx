@@ -7,6 +7,7 @@ import { checkUserExists, saveUser, getUser } from "../hooks/useRealtimeDatabase
 import { ethers } from "ethers";
 import abi from "../build/Bridge.json"
 
+
 const chainData: { [key: number]: { router: string; link: string; destinationChainSelector: string; ccip: string } } = {
   11155111 : { // Ethereum Sepolia
       router: '0x0BF3dE8c5D3e8A2B34D2BEeB17ABfCeBaf363A59',
@@ -22,8 +23,6 @@ const chainData: { [key: number]: { router: string; link: string; destinationCha
   },
 };
 
-
-
 const Home = () => {
     const [showModal, setShowModal] = useState(false);
     const [user, setUser] = useState<any>(null);
@@ -38,7 +37,7 @@ const Home = () => {
               if (exists) {
                   const _user = await getUser(account);
                   setUser(_user);
-                  console.log("User details:", user);
+                  console.log("User details:", _user);
               } else {
                   setShowModal(true);
               }

@@ -37,3 +37,20 @@ export const getUser = async (walletAddress: string) => {
     return null; // User not found
   }
 };
+
+export const getWalletbyUsername = async (username: string) => {
+  const usersRef = ref(database, "users"); // Reference to the users collection
+  const snapshot = await get(usersRef);
+
+  if (snapshot.exists()) {
+    // Convert data into an array and find the user by username
+    const usersData = snapshot.val();
+    for (const walletAddress in usersData) {
+      if (usersData[walletAddress].username === username) {
+        return walletAddress; // Return the wallet address
+      }
+    }
+  }
+  
+  return null; // Return null if user not found
+};
