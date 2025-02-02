@@ -30,39 +30,6 @@ const Home = () => {
     const { account, provider } = useMetaMask();
 
     useEffect(() => {
-<<<<<<< HEAD
-      if (account) {
-        console.log("Checking user existence for:", account);
-        checkUserExists(account)
-          .then((exists) => {
-            console.log("User exists:", exists);
-            setUserExists(exists);
-            if (!exists) setShowModal(true);
-          })
-          .catch((error) => {
-            console.error("Error checking user existence:", error);
-            setUserExists(false); // Handle error by assuming the user doesn't exist
-          });
-      } else {
-        setUserExists(null);
-        setShowModal(false);
-      }
-    }, [account]);
-  
-    const handleSaveUser = async (username: string) => {
-      if (username.trim() !== "") {
-        try {
-          await saveUser(account as string, username);
-          setShowModal(false);
-          setUserExists(true);
-        } catch (error) {
-          console.error("Error saving user:", error);
-          // You can handle the error state here
-        }
-      }
-    };
-
-=======
       const fetchUser = async () => {
           if (account) {
               console.log("Checking user existence for:", account);
@@ -244,7 +211,6 @@ const fundAgentWallet = async (agentAddress: string, provider: ethers.BrowserPro
   };
 
 
->>>>>>> f38f1f0b522dbb213e477f20eefaf83784590527
   return (
     <>
       <div className="max-w-7xl mx-auto px-4 py-12 mt-32">
