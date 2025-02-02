@@ -21,7 +21,7 @@ interface Swap {
 }
 
 const parseCommand = (input: string): MoneyTransfer | Swap | null => {
-  const transferRegex = /send\s+(\d+)\s*(usd|usd|dollars)\s+to\s+([a-zA-Z]+)\s+on\s+([a-zA-Z]+)/i;
+  const transferRegex = /send\s+(\d+(?:\.\d+)?)\s*(usd|dollars)\s+to\s+([a-zA-Z]+)\s+on\s+([a-zA-Z]+)/i;
   const transferMatch = input.match(transferRegex);
 
   if (transferMatch) {
@@ -142,53 +142,60 @@ const Chat = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 mt-32">
-      <h1 className="text-2xl font-bold text-gray-900 mb-4">Chat</h1>
+    <div className="max-w-4xl mx-auto px-4 py-6 mt-32">
+    <h1 className="text-3xl font-semibold text-gray-900 dark:text-gray-700 mb-4">Chat</h1>
 
-      <div className="bg-white rounded-lg shadow-lg flex flex-col h-[70vh]">
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {messages.map((message, index) => (
-            <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[80%] rounded-lg p-4 ${message.role === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'}`}>
-                <p className="whitespace-pre-wrap">{message.content}</p>
-              </div>
-            </div>
-          ))}
-          {isLoading && (
-            <div className="flex justify-start">
-              <div className="bg-gray-100 rounded-lg p-4">
-                <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
-              </div>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-
-        <form onSubmit={handleSubmit} className="border-t border-gray-200 p-4 bg-white">
-          <div className="flex space-x-4">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Type your message..."
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              disabled={isLoading}
-            />
-            <button
-              type="submit"
-              disabled={isLoading || !input.trim()}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+    {/* Chat Box */}
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg flex flex-col h-[60vh] border border-gray-200 dark:border-gray-700">
+      <div className="flex-1 overflow-y-auto p-3 space-y-3">
+        {messages.map((message, index) => (
+          <div key={index} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
+            <div
+              className={`max-w-[75%] rounded-lg px-4 py-3 text-sm ${message.role === "user" ? "bg-blue-600 text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100"}`}
             >
-              <Send className="h-5 w-5" />
-            </button>
+              <p className="whitespace-pre-wrap">{message.content}</p>
+            </div>
           </div>
-        </form>
+        ))}
+        {isLoading && (
+          <div className="flex justify-start">
+            <div className="bg-gray-200 dark:bg-gray-700 rounded-lg p-3">
+              <Loader2 className="h-5 w-5 animate-spin text-gray-500 dark:text-gray-300" />
+            </div>
+          </div>
+        )}
+        <div ref={messagesEndRef} />
       </div>
 
-      <div className="min-h-screen bg-gray-100 p-4">
-        <TransactionHistory />
-      </div>
+      <form onSubmit={handleSubmit} className="border-t border-gray-200 dark:border-gray-700 p-3 bg-white dark:bg-gray-800 rounded-lg">
+  <div className="flex space-x-3 w-full">
+    <input
+      type="text"
+      value={input}
+      onChange={(e) => setInput(e.target.value)}
+      placeholder="Type a message..."
+      className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white"
+      disabled={isLoading}
+    />
+    <button
+      type="submit"
+      disabled={isLoading || !input.trim()}
+      className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      <Send className="h-5 w-5" />
+    </button>
+  </div>
+</form>
+
     </div>
+
+    {/* Wrapping Transaction History to match width */}
+    <div className="max-w-4xl mx-auto  mt-8">
+      <TransactionHistory />
+    </div>
+  </div>
+
+
   );
 };
 

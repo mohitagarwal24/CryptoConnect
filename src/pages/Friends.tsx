@@ -13,7 +13,33 @@ interface Friend {
 const currentUserWallet = "0x31539ed986f4e1d9b3ce42f50fec33565067975d"; // Replace with actual authenticated user wallet
 
 const Friends = () => {
-  const [friends, setFriends] = useState<Friend[]>([]);
+  const [friends, setFriends] = useState<Friend[]>([
+    {
+      id: 1,
+      name: "Alice",
+      agentWalletAddress: "0xabc123...",
+      avatar: "https://randomuser.me/api/portraits/men/1.jpg",
+    },
+    {
+      id: 2,
+      name: "Bob",
+      agentWalletAddress: "0xdef456...",
+      avatar: "https://randomuser.me/api/portraits/men/2.jpg",
+    },
+    {
+      id: 3,
+      name: "Charlie",
+      agentWalletAddress: "0xghi789...",
+      avatar: "https://randomuser.me/api/portraits/women/3.jpg",
+    },
+    {
+      id: 4,
+      name: "Diana",
+      agentWalletAddress: "0xjkl012...",
+      avatar: "https://randomuser.me/api/portraits/women/4.jpg",
+    },
+  ]);
+
   const [walletInput, setWalletInput] = useState("");
 
   // Check if the wallet address exists & fetch user details
@@ -60,6 +86,7 @@ const Friends = () => {
     const newFriend = {
       name: friendData.username,
       agentWalletAddress: trimmedWalletInput,
+      avatar: "https://randomuser.me/api/portraits/men/5.jpg", // Example avatar
     };
   
     // Fetch current user's friends to check if the wallet already exists
@@ -75,7 +102,7 @@ const Friends = () => {
     await update(ref(database, `users/${currentUserWallet}/friends/${trimmedWalletInput}`), newFriend);
   
     // Update local state to show the new friend in the UI
-    setFriends([...friends, { id: Date.now(), ...newFriend, avatar: "https://via.placeholder.com/100" }]);
+    setFriends([...friends, { id: Date.now(), ...newFriend }]);
     setWalletInput(""); // Clear input field
   };
 
@@ -91,11 +118,11 @@ const Friends = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 mt-32">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Friends</h1>
+    <div className="max-w-7xl mx-auto px-4 py-8 mt-32 ">
+      <div className="flex justify-between items-center mb-8 ">
+        <h1 className="text-3xl font-bold text-gray-900">Friends</h1>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 ">
           <input
             type="text"
             placeholder="Enter Wallet Address"
@@ -113,8 +140,8 @@ const Friends = () => {
         </div>
       </div>
 
-      <div className="mb-6">
-        <div className="relative">
+      <div className="mb-6 " >
+        <div className="relative ">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
           <input
             type="text"
@@ -124,7 +151,7 @@ const Friends = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm">
+      <div className="bg-white rounded-xl shadow-sm dark:bg-gray-700">
         {friends.map((friend) => (
           <div key={friend.id} className="flex items-center justify-between p-4 border-b last:border-b-0">
             <div className="flex items-center space-x-4">

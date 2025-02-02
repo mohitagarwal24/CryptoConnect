@@ -42,47 +42,46 @@ const transactions: Transaction[] = [
 
 const TransactionHistory = () => {
   return (
-    <div className="max-w-6xl mx-auto p-6 bg-white shadow-md rounded-lg mt-10">
-      <h2 className="text-2xl font-bold text-gray-900 mb-4">Transaction History</h2>
+    <div className="max-w-full mx-auto p-4 bg-white dark:bg-gray-800 shadow-md rounded-lg mt-6">
+  <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Transaction History</h2>
 
-      <table className="min-w-full table-auto border-collapse">
-        <thead>
-          <tr className="bg-gray-100 text-left">
-            <th className="px-4 py-2 border-b text-sm font-semibold text-gray-700">Tx Hash</th>
-            <th className="px-4 py-2 border-b text-sm font-semibold text-gray-700">From</th>
-            <th className="px-4 py-2 border-b text-sm font-semibold text-gray-700">To</th>
-            <th className="px-4 py-2 border-b text-sm font-semibold text-gray-700">Amount</th>
-            <th className="px-4 py-2 border-b text-sm font-semibold text-gray-700">Chain</th>
-            <th className="px-4 py-2 border-b text-sm font-semibold text-gray-700">Timestamp</th>
-            <th className="px-4 py-2 border-b text-sm font-semibold text-gray-700">Status</th>
+  {/* Scrollable Table Container */}
+  <div className="overflow-x-auto rounded-b-lg">
+    <table className="min-w-full table-auto border-collapse">
+      <thead>
+        <tr className="bg-gray-100 dark:bg-gray-700 text-left text-sm font-semibold text-gray-700 dark:text-white">
+          <th className="px-4 py-2 border-b">Tx Hash</th>
+          <th className="px-4 py-2 border-b">From</th>
+          <th className="px-4 py-2 border-b">To</th>
+          <th className="px-4 py-2 border-b">Amount</th>
+          <th className="px-4 py-2 border-b">Chain</th>
+          <th className="px-4 py-2 border-b">Timestamp</th>
+          <th className="px-4 py-2 border-b">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {transactions.map((tx) => (
+          <tr key={tx.hash} className="bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800">
+            <td className="px-4 py-2 border-b text-sm text-gray-800 dark:text-white truncate">{tx.hash.slice(0, 10)}...</td>
+            <td className="px-4 py-2 border-b text-sm text-gray-800 dark:text-white truncate">{tx.from}</td>
+            <td className="px-4 py-2 border-b text-sm text-gray-800 dark:text-white truncate">{tx.to}</td>
+            <td className={`px-4 py-2 border-b text-sm font-semibold ${tx.from.includes("ABC123") ? "text-red-500" : "text-green-500"}`}>
+              {tx.from.includes("ABC123") ? `- ${tx.value}` : `+ ${tx.value}`}
+            </td>
+            <td className="px-4 py-2 border-b text-sm text-gray-800 dark:text-white">{tx.chain}</td>
+            <td className="px-4 py-2 border-b text-sm text-gray-800 dark:text-white">{tx.timestamp}</td>
+            <td className={`px-4 py-2 border-b text-sm font-semibold ${tx.status === "confirmed" ? "text-green-600" : "text-yellow-500"}`}>
+              {tx.status === "confirmed" ? "✅ Confirmed" : "⏳ Pending"}
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          {transactions.map((tx) => (
-            <tr key={tx.hash} className="bg-gray-50 hover:bg-gray-100">
-              <td className="px-4 py-2 border-b text-sm text-gray-800">
-                <span className="font-mono">{tx.hash.slice(0, 10)}...</span>
-              </td>
-              <td className="px-4 py-2 border-b text-sm text-gray-800">
-                <span className="font-mono">{tx.from}</span>
-              </td>
-              <td className="px-4 py-2 border-b text-sm text-gray-800">
-                <span className="font-mono">{tx.to}</span>
-              </td>
-              <td className={`px-4 py-2 border-b text-sm font-semibold ${tx.from.includes("ABC123") ? "text-red-500" : "text-green-500"}`}>
-                {tx.from.includes("ABC123") ? `- ${tx.value}` : `+ ${tx.value}`}
-              </td>
-              <td className="px-4 py-2 border-b text-sm text-gray-800">{tx.chain}</td>
-              <td className="px-4 py-2 border-b text-sm text-gray-800">{tx.timestamp}</td>
-              <td className={`px-4 py-2 border-b text-sm font-semibold ${tx.status === "confirmed" ? "text-green-600" : "text-yellow-500"}`}>
-                {tx.status === "confirmed" ? "✅ Confirmed" : "⏳ Pending"}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</div>
+
   );
 };
+
 
 export default TransactionHistory;
